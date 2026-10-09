@@ -1,0 +1,525 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#173f38">
+    <meta name="description" content="Encontre profissionais de saúde e gerencie suas consultas.">
+    <title>ClínAgenda | Saúde sem complicação</title>
+
+    <link rel="manifest" href="./manifest.json">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <header class="site-header">
+        <a href="#" class="brand" id="brand-home">
+            <span class="brand-icon">+</span>
+            <span>ClínAgenda</span>
+        </a>
+
+        <div class="header-actions">
+            <span id="connection-status" class="connection-status">
+                Verificando conexão...
+            </span>
+            <button id="logout-button" class="button button-outline" type="button" hidden>
+                Sair
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- LOGIN E CADASTRO -->
+        <section id="auth-screen" class="auth-layout">
+            <div class="hero-copy">
+                <span class="eyebrow">Cuidado que aproxima</span>
+                <h1>Sua saúde merece uma experiência <span>mais simples.</span></h1>
+                <p>
+                    Encontre profissionais, consulte disponibilidades
+                    e organize suas consultas em um só lugar.
+                </p>
+
+                <div class="hero-features">
+                    <div class="feature-item">
+                        <span class="feature-icon">✓</span>
+                        <div>
+                            <strong>Prático e organizado</strong>
+                            <p>Informações reunidas em um só sistema.</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <span class="feature-icon">✓</span>
+                        <div>
+                            <strong>Agendamento simplificado</strong>
+                            <p>Consulte horários e acompanhe suas consultas.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-card">
+                <div class="auth-tabs" role="tablist">
+                    <button id="show-login" class="auth-tab active"
+                        type="button" role="tab" aria-selected="true">
+                        Entrar
+                    </button>
+                    <button id="show-register" class="auth-tab"
+                        type="button" role="tab" aria-selected="false">
+                        Criar conta
+                    </button>
+                </div>
+
+                <form id="login-form">
+                    <div class="section-heading">
+                        <h2>Bem-vindo de volta</h2>
+                        <p>Entre com seus dados para continuar.</p>
+                    </div>
+
+                    <label for="login-email">E-mail</label>
+                    <input id="login-email" name="email" type="email"
+                        placeholder="voce@email.com" autocomplete="email" required>
+
+                    <label for="login-senha">Senha</label>
+                    <input id="login-senha" name="senha" type="password"
+                        placeholder="Digite sua senha"
+                        autocomplete="current-password" required>
+
+                    <p id="login-message" class="form-message" role="status"></p>
+
+                    <button class="button button-primary button-full" type="submit">
+                        Entrar na minha conta
+                    </button>
+                </form>
+
+                <form id="register-form" hidden>
+                    <div class="section-heading">
+                        <h2>Crie sua conta</h2>
+                        <p>Preencha seus dados para se cadastrar como paciente.</p>
+                    </div>
+
+                    <label for="register-nome">Nome completo</label>
+                    <input id="register-nome" name="nome" type="text"
+                        autocomplete="name" required>
+
+                    <label for="register-email">E-mail</label>
+                    <input id="register-email" name="email" type="email"
+                        autocomplete="email" required>
+
+                    <label for="register-senha">Senha</label>
+                    <input id="register-senha" name="senha" type="password"
+                        minlength="8" autocomplete="new-password"
+                        placeholder="Mínimo de 8 caracteres" required>
+
+                    <div class="form-grid">
+                        <div>
+                            <label for="register-cpf">CPF</label>
+                            <input id="register-cpf" name="cpf" type="text"
+                                inputmode="numeric" placeholder="Somente números"
+                                maxlength="14" required>
+                        </div>
+                        <div>
+                            <label for="register-nascimento">Nascimento</label>
+                            <input id="register-nascimento" name="dataNascimento"
+                                type="date" required>
+                        </div>
+                    </div>
+
+                    <label for="register-telefone">Telefone</label>
+                    <input id="register-telefone" name="telefone" type="tel"
+                        autocomplete="tel" required>
+
+                    <label for="register-endereco">Endereço</label>
+                    <input id="register-endereco" name="endereco" type="text"
+                        autocomplete="street-address">
+
+                    <p id="register-message" class="form-message" role="status"></p>
+
+                    <button class="button button-primary button-full" type="submit">
+                        Criar minha conta
+                    </button>
+                </form>
+
+                <p class="auth-note">
+                    Seus dados são utilizados para gerenciar sua conta e suas consultas.
+                </p>
+            </div>
+        </section>
+
+        <!-- ÁREA INTERNA DO SISTEMA -->
+        <section id="app-screen" hidden>
+            <div class="dashboard-heading">
+                <div>
+                    <span class="eyebrow">PAINEL DO SISTEMA</span>
+                    <h1>Olá, <span id="user-name">usuário</span>!</h1>
+                    <p>Gerencie suas informações e acompanhe suas consultas.</p>
+                </div>
+                <span id="user-role" class="role-pill">Paciente</span>
+            </div>
+
+            <nav class="app-nav" id="app-nav" aria-label="Menu principal">
+                <button class="nav-button active" type="button" data-view="home">
+                    Início
+                </button>
+                <button class="nav-button" type="button" data-view="clinics">
+                    Clínicas
+                </button>
+                <button class="nav-button" type="button" data-view="specialties">
+                    Especialidades
+                </button>
+                <button class="nav-button" type="button" data-view="professionals">
+                    Profissionais
+                </button>
+                <button class="nav-button" type="button" data-view="availability"
+                    data-roles="profissional,administrador">
+                    Disponibilidades
+                </button>
+                <button class="nav-button" type="button" data-view="appointments">
+                    Consultas
+                </button>
+                <button class="nav-button" type="button" data-view="profile"
+                    data-roles="paciente,administrador">
+                    Meu perfil
+                </button>
+            </nav>
+
+            <!-- INÍCIO -->
+            <section id="view-home" class="content-view">
+                <div class="welcome-panel">
+                    <div>
+                        <span class="eyebrow">CLÍNAGENDA</span>
+                        <h2>Seu cuidado, em primeiro lugar.</h2>
+                        <p>
+                            Consulte as informações disponíveis e acompanhe
+                            sua jornada de atendimento.
+                        </p>
+                        <button class="button button-primary" type="button"
+                            data-go-view="professionals">
+                            Encontrar profissionais
+                        </button>
+                    </div>
+                    <div class="welcome-symbol" aria-hidden="true">✚</div>
+                </div>
+
+                <div class="section-heading section-heading-row">
+                    <div>
+                        <h2>Acesso rápido</h2>
+                        <p>Escolha o que deseja consultar.</p>
+                    </div>
+                </div>
+
+                <div class="quick-grid">
+                    <button class="quick-card" type="button" data-go-view="clinics">
+                        <span class="quick-icon">⌂</span>
+                        <strong>Clínicas</strong>
+                        <span>Consulte locais de atendimento</span>
+                    </button>
+
+                    <button class="quick-card" type="button"
+                        data-go-view="specialties">
+                        <span class="quick-icon">✚</span>
+                        <strong>Especialidades</strong>
+                        <span>Conheça as áreas disponíveis</span>
+                    </button>
+
+                    <button class="quick-card" type="button"
+                        data-go-view="professionals">
+                        <span class="quick-icon">♙</span>
+                        <strong>Profissionais</strong>
+                        <span>Encontre profissionais de saúde</span>
+                    </button>
+
+                    <button class="quick-card" type="button"
+                        data-go-view="appointments">
+                        <span class="quick-icon">▦</span>
+                        <strong>Consultas</strong>
+                        <span>Consulte seus agendamentos</span>
+                    </button>
+                </div>
+
+                <p id="home-message" class="form-message" role="status"></p>
+            </section>
+
+            <!-- CLÍNICAS -->
+            <section id="view-clinics" class="content-view" hidden>
+                <div class="section-heading section-heading-row">
+                    <div>
+                        <span class="eyebrow">ATENDIMENTO</span>
+                        <h2>Clínicas</h2>
+                        <p>Consulte os locais de atendimento cadastrados.</p>
+                    </div>
+                    <button id="reload-clinics" class="button button-outline"
+                        type="button">Atualizar</button>
+                </div>
+
+                <form id="clinic-form" class="data-form" hidden>
+                    <h3>Cadastrar clínica</h3>
+                    <label for="clinic-nome">Nome</label>
+                    <input id="clinic-nome" name="nome" required>
+
+                    <label for="clinic-endereco">Endereço</label>
+                    <input id="clinic-endereco" name="endereco" required>
+
+                    <label for="clinic-telefone">Telefone</label>
+                    <input id="clinic-telefone" name="telefone" type="tel" required>
+
+                    <p id="clinic-message" class="form-message" role="status"></p>
+                    <button class="button button-primary" type="submit">
+                        Cadastrar clínica
+                    </button>
+                </form>
+
+                <div id="clinic-list" class="data-list"></div>
+            </section>
+
+            <!-- ESPECIALIDADES -->
+            <section id="view-specialties" class="content-view" hidden>
+                <div class="section-heading section-heading-row">
+                    <div>
+                        <span class="eyebrow">ÁREAS DA SAÚDE</span>
+                        <h2>Especialidades</h2>
+                        <p>Conheça as especialidades disponíveis.</p>
+                    </div>
+                    <button id="reload-specialties" class="button button-outline"
+                        type="button">Atualizar</button>
+                </div>
+
+                <form id="specialty-form" class="data-form" hidden>
+                    <h3>Cadastrar especialidade</h3>
+                    <label for="specialty-nome">Nome da especialidade</label>
+                    <input id="specialty-nome" name="nome"
+                        placeholder="Ex.: Cardiologia" required>
+                    <p id="specialty-message" class="form-message" role="status"></p>
+                    <button class="button button-primary" type="submit">
+                        Cadastrar especialidade
+                    </button>
+                </form>
+
+                <div id="specialty-list" class="data-list"></div>
+            </section>
+
+            <!-- PROFISSIONAIS -->
+            <section id="view-professionals" class="content-view" hidden>
+                <div class="section-heading section-heading-row">
+                    <div>
+                        <span class="eyebrow">EQUIPE DE SAÚDE</span>
+                        <h2>Profissionais</h2>
+                        <p>Consulte os profissionais e seus locais de atendimento.</p>
+                    </div>
+                    <button id="reload-professionals" class="button button-outline"
+                        type="button">Atualizar</button>
+                </div>
+
+                <div class="filter-panel">
+                    <label for="filter-professional-name">Buscar por nome</label>
+                    <input id="filter-professional-name" placeholder="Nome do profissional">
+
+                    <label for="filter-professional-specialty">Especialidade</label>
+                    <input id="filter-professional-specialty"
+                        placeholder="Ex.: Cardiologia">
+
+                    <button id="search-professionals" class="button button-primary"
+                        type="button">Buscar</button>
+                </div>
+
+                <form id="professional-form" class="data-form" hidden>
+                    <h3>Cadastrar profissional</h3>
+
+                    <label for="professional-nome">Nome completo</label>
+                    <input id="professional-nome" name="nome" required>
+
+                    <label for="professional-registro">Registro profissional</label>
+                    <input id="professional-registro" name="registro" required>
+
+                    <label for="professional-telefone">Telefone</label>
+                    <input id="professional-telefone" name="telefone"
+                        type="tel" required>
+
+                    <label for="professional-clinic">Clínica</label>
+                    <select id="professional-clinic" name="clinicaId" required>
+                        <option value="">Selecione uma clínica</option>
+                    </select>
+
+                    <label for="professional-specialty">Especialidade</label>
+                    <select id="professional-specialty" name="especialidadeId"
+                        required>
+                        <option value="">Selecione uma especialidade</option>
+                    </select>
+
+                    <p id="professional-message" class="form-message" role="status"></p>
+                    <button class="button button-primary" type="submit">
+                        Cadastrar profissional
+                    </button>
+                </form>
+
+                <form id="professional-access-form" class="data-form" hidden>
+                    <h3>Criar acesso para profissional</h3>
+                    <p>O profissional precisa estar cadastrado antes da criação da conta.</p>
+
+                    <label for="access-professional">Profissional</label>
+                    <select id="access-professional" required>
+                        <option value="">Selecione um profissional</option>
+                    </select>
+
+                    <label for="access-email">E-mail de acesso</label>
+                    <input id="access-email" type="email" required>
+
+                    <label for="access-password">Senha inicial</label>
+                    <input id="access-password" type="password"
+                        minlength="8" autocomplete="new-password" required>
+
+                    <p id="access-message" class="form-message" role="status"></p>
+                    <button class="button button-primary" type="submit">
+                        Criar acesso
+                    </button>
+                </form>
+
+                <div id="professional-list" class="data-list"></div>
+            </section>
+
+            <!-- DISPONIBILIDADES -->
+            <section id="view-availability" class="content-view" hidden>
+                <div class="section-heading section-heading-row">
+                    <div>
+                        <span class="eyebrow">AGENDA</span>
+                        <h2>Disponibilidades</h2>
+                        <p>Consulte e cadastre horários de atendimento.</p>
+                    </div>
+                    <button id="reload-availability" class="button button-outline"
+                        type="button">Atualizar</button>
+                </div>
+
+                <form id="availability-form" class="data-form" hidden>
+                    <h3>Novo horário disponível</h3>
+
+                    <div id="availability-professional-field">
+                        <label for="availability-professional">Profissional</label>
+                        <select id="availability-professional">
+                            <option value="">Selecione um profissional</option>
+                        </select>
+                    </div>
+
+                    <label for="availability-day">Dia da semana</label>
+                    <select id="availability-day" required>
+                        <option value="">Selecione o dia</option>
+                        <option value="segunda">Segunda-feira</option>
+                        <option value="terça">Terça-feira</option>
+                        <option value="quarta">Quarta-feira</option>
+                        <option value="quinta">Quinta-feira</option>
+                        <option value="sexta">Sexta-feira</option>
+                        <option value="sábado">Sábado</option>
+                        <option value="domingo">Domingo</option>
+                    </select>
+
+                    <div class="form-grid">
+                        <div>
+                            <label for="availability-start">Início</label>
+                            <input id="availability-start" type="time" required>
+                        </div>
+                        <div>
+                            <label for="availability-end">Fim</label>
+                            <input id="availability-end" type="time" required>
+                        </div>
+                    </div>
+
+                    <p id="availability-message" class="form-message" role="status"></p>
+                    <button class="button button-primary" type="submit">
+                        Salvar disponibilidade
+                    </button>
+                </form>
+
+                <div id="availability-list" class="data-list"></div>
+            </section>
+
+            <!-- CONSULTAS -->
+            <section id="view-appointments" class="content-view" hidden>
+                <div class="section-heading section-heading-row">
+                    <div>
+                        <span class="eyebrow">SEUS ATENDIMENTOS</span>
+                        <h2>Consultas</h2>
+                        <p>Agende, acompanhe ou consulte o status dos atendimentos.</p>
+                    </div>
+                    <button id="reload-appointments" class="button button-outline"
+                        type="button">Atualizar</button>
+                </div>
+
+                <form id="appointment-form" class="data-form" hidden>
+                    <h3>Agendar consulta</h3>
+
+                    <label for="appointment-professional">Profissional</label>
+                    <select id="appointment-professional" required>
+                        <option value="">Selecione um profissional</option>
+                    </select>
+
+                    <div class="form-grid">
+                        <div>
+                            <label for="appointment-date">Data</label>
+                            <input id="appointment-date" type="date" required>
+                        </div>
+                        <div>
+                            <label for="appointment-time">Horário</label>
+                            <input id="appointment-time" type="time" required>
+                        </div>
+                    </div>
+
+                    <p class="helper-text">
+                        O agendamento depende da disponibilidade cadastrada para o profissional.
+                    </p>
+
+                    <p id="appointment-message" class="form-message" role="status"></p>
+                    <button class="button button-primary" type="submit">
+                        Confirmar agendamento
+                    </button>
+                </form>
+
+                <div id="appointment-list" class="data-list"></div>
+            </section>
+
+            <!-- PERFIL DO PACIENTE -->
+            <section id="view-profile" class="content-view" hidden>
+                <div class="section-heading">
+                    <span class="eyebrow">CONTA</span>
+                    <h2>Meu perfil</h2>
+                    <p>Confira e atualize os dados permitidos da sua conta.</p>
+                </div>
+
+                <form id="profile-form" class="data-form">
+                    <label for="profile-nome">Nome completo</label>
+                    <input id="profile-nome" required>
+
+                    <label for="profile-email">E-mail</label>
+                    <input id="profile-email" type="email" required>
+
+                    <div id="profile-cpf-field">
+                        <label for="profile-cpf">CPF</label>
+                        <input id="profile-cpf">
+                    </div>
+
+                    <div id="profile-birth-field">
+                        <label for="profile-nascimento">Data de nascimento</label>
+                        <input id="profile-nascimento" type="date">
+                    </div>
+
+                    <label for="profile-telefone">Telefone</label>
+                    <input id="profile-telefone" type="tel">
+
+                    <label for="profile-endereco">Endereço</label>
+                    <input id="profile-endereco">
+
+                    <p id="profile-message" class="form-message" role="status"></p>
+                    <button class="button button-primary" type="submit">
+                        Salvar alterações
+                    </button>
+                </form>
+            </section>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>ClínAgenda · Projeto Integrador</p>
+        <p>Cuidar da saúde começa com acesso à informação.</p>
+    </footer>
+
+    <script src="./app.js"></script>
+</body>
+</html>
