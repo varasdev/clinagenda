@@ -1,5 +1,5 @@
 
-const API_URL = "http://localhost:3000";
+const API_URL = "https://clinagenda-api.onrender.com";
 
 const $ = (seletor) => document.querySelector(seletor);
 
