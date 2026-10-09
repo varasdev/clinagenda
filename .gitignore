@@ -1,0 +1,7 @@
+# Dependências do Node.js
+node_modules/
+
+# Variáveis de ambiente e segredos
+.env
+.env.*
+!.env.example
