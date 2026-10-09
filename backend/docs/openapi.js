@@ -34,9 +34,13 @@ const openapi = {
 
     servers: [
         {
-            url: "http://localhost:3000",
-            description: "Servidor local"
-        }
+        url: "https://clinagenda-api.onrender.com",
+        description: "API publicada"
+    },
+    {
+        url: "http://localhost:3000",
+        description: "Servidor local"
+    }
     ],
 
     tags: [
