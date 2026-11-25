@@ -16,6 +16,15 @@ async function conectarBanco() {
 
         db = client.db(process.env.DB_NAME);
 
+        // Criar índices para a coleção triagens
+        try {
+            await db.collection("triagens").createIndex({ pacienteId: 1, criadoEm: -1 });
+            await db.collection("triagens").createIndex({ consultaId: 1 }, { unique: true, sparse: true });
+            await db.collection("triagens").createIndex({ sessionId: 1 }, { unique: true });
+        } catch (indexError) {
+            console.warn("Aviso ao criar índices de triagens:", indexError.message);
+        }
+
         console.log("MongoDB conectado com sucesso!");
     } catch (erro) {
         console.error("Erro ao conectar ao MongoDB:", erro);

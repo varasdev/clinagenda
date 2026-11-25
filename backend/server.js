@@ -10,6 +10,7 @@ const authRoutes = require("./routes/auth");
 const perfisRoutes = require("./routes/perfis");
 const disponibilidadesRoutes = require("./routes/disponibilidades");
 const agendamentosRoutes = require("./routes/agendamentos");
+const triagemRoutes = require("./routes/triagem");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./docs/openapi");
 const { conectarBanco } = require("./config/database");
@@ -34,6 +35,7 @@ app.use("/auth", authRoutes);
 app.use("/perfis", perfisRoutes);
 app.use("/disponibilidades", disponibilidadesRoutes);
 app.use("/agendamentos", agendamentosRoutes);
+app.use("/triage", triagemRoutes);
 app.get("/", (req, res) => {
     res.json({
         mensagem: "API do Projeto Integrador funcionando!"

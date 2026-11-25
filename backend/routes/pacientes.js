@@ -287,16 +287,51 @@ router.put(
 
             for (const campo of camposPermitidos) {
                 if (req.body[campo] !== undefined) {
-                    if (
+                    if (campo === "endereco") {
+                        const end = req.body.endereco;
+                        if (typeof end === "object" && end !== null) {
+                            // Validar campos obrigatórios do endereço
+                            const requiredFields = ["cep", "logradouro", "numero", "bairro", "cidade", "estado"];
+                            for (const f of requiredFields) {
+                                if (!end[f] || !String(end[f]).trim()) {
+                                    return res.status(400).json({
+                                        mensagem: `O campo endereço.${f} é obrigatório.`
+                                    });
+                                }
+                            }
+                            if (end.estado && String(end.estado).length !== 2) {
+                                return res.status(400).json({
+                                    mensagem: "O estado deve ter 2 letras (ex: SP)."
+                                });
+                            }
+                            // Normalizar CEP (apenas números)
+                            atualizacoes.endereco = {
+                                cep: String(end.cep).replace(/\D/g, ""),
+                                logradouro: String(end.logradouro).trim(),
+                                numero: String(end.numero).trim(),
+                                complemento: end.complemento ? String(end.complemento).trim() : "",
+                                bairro: String(end.bairro).trim(),
+                                cidade: String(end.cidade).trim(),
+                                estado: String(end.estado).trim().toUpperCase(),
+                            };
+                        } else if (typeof end === "string" && end.trim()) {
+                            // Fallback: string simples
+                            atualizacoes.endereco = end.trim();
+                        } else {
+                            return res.status(400).json({
+                                mensagem: "Endereço inválido. Envie objeto com cep, logradouro, numero, bairro, cidade, estado."
+                            });
+                        }
+                    } else if (
                         typeof req.body[campo] !== "string" ||
                         !req.body[campo].trim()
                     ) {
                         return res.status(400).json({
                             mensagem: `O campo ${campo} deve ser um texto não vazio.`
                         });
+                    } else {
+                        atualizacoes[campo] = req.body[campo].trim();
                     }
-
-                    atualizacoes[campo] = req.body[campo].trim();
                 }
             }
 

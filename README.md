@@ -1,260 +1,285 @@
 # ClínAgenda — Sistema de Agendamento de Consultas
 
-Aplicação web desenvolvida como Projeto Integrador para gerenciar clínicas, especialidades, profissionais de saúde, pacientes, disponibilidades de atendimento e agendamentos de consultas.
+**Projeto Integrador — 2ª Entrega: "Saúde na Palma da Mão"**
 
-O projeto é composto por uma **API REST**, uma **interface web responsiva** e recursos de **Progressive Web App (PWA)**. O backend utiliza Node.js, Express e MongoDB; o frontend foi desenvolvido com HTML, CSS e JavaScript puro.
+Aplicação completa composta por:
+- **API REST** (Node.js/Express 5/MongoDB)
+- **Interface Web PWA** (HTML/CSS/JS vanilla)
+- **App Mobile React Native/Expo** (Paciente) — **NOVO na 2ª Entrega**
 
-## Acesso ao projeto
+---
 
-- **Aplicação web:** [https://clinagenda.onrender.com/](https://clinagenda.onrender.com/)
-- **API:** [https://clinagenda-api.onrender.com/](https://clinagenda-api.onrender.com/)
-- **Documentação interativa (Swagger UI):** [https://clinagenda-api.onrender.com/docs](https://clinagenda-api.onrender.com/docs)
-- **Repositório:** [https://github.com/varasdev/clinagenda](https://github.com/varasdev/clinagenda)
+## Acesso ao Projeto
+
+| Componente | URL |
+|------------|-----|
+| **Aplicação Web PWA** | https://clinagenda.onrender.com/ |
+| **API** | https://clinagenda-api.onrender.com/ |
+| **Documentação Swagger** | https://clinagenda-api.onrender.com/docs |
+| **Mobile APK (Preview)** | Via EAS Build: `eas build --profile preview --platform android` |
+| **Repositório** | https://github.com/varasdev/clinagenda |
+
+---
 
 ## Funcionalidades
 
-### Autenticação e perfis
+### Backend (API REST)
+- **Autenticação JWT** (8h expiração) + bcryptjs
+- **RBAC**: paciente, profissional, administrador
+- **Gestão**: clínicas, especialidades, profissionais, pacientes, disponibilidades, agendamentos
+- **Pré-triagem IA** (`/triage/*`) — Anthropic Claude Opus 5.5 via provider pattern
+- **Validação**: Zod schemas, conflitos 409, transações MongoDB
+- **Documentação**: Swagger/OpenAPI 3.0
 
-- Cadastro público de pacientes.
-- Login com autenticação baseada em JWT.
-- Controle de acesso por perfil: paciente, profissional e administrador.
-- Criação administrativa de contas vinculadas a profissionais já cadastrados.
-- Consulta da sessão do usuário autenticado.
+### Web PWA (1ª Entrega)
+- Dashboard adaptado por perfil
+- Formulários integrados à API
+- Layout responsivo + PWA (manifest + Service Worker)
+- Cache estático básico
 
-### Gestão do atendimento
+### Mobile App — Paciente (2ª Entrega — **NOVO**)
+| Tela | Funcionalidades |
+|------|-----------------|
+| **Login** | Email/senha → JWT → SecureStore |
+| **Home** | Boas-vindas, próxima consulta em destaque, ação rápida "Iniciar triagem", badge na aba Agenda |
+| **Triagem (Chatbot)** | Bolhas user/assistant, input fixo, indicador "digitando...", max 7 turnos, detecção emergência determinística |
+| **Resultado Triagem** | Especialidades com badge confiança (alta/média/baixa), disclaimer obrigatório, navegação para agendar |
+| **Agendamentos** | Tabs "Próximos"/"Histórico", cards profissional/data/hora/status, cancelar com confirmação, pull-to-refresh |
+| **Agendar** | Wizard 3 passos: Profissional → Data (scroller) → Hora (grid) → Resumo + Confirmar, passa `triagemId` |
+| **Detalhe Agendamento** | Dados completos: profissional, clínica, endereço, mapa, telefone, cancelar/reagendar |
+| **Perfil** | Dados só leitura (nome, email, CPF, nascimento, telefone, endereço estruturado), botão Editar |
+| **Editar Perfil** | Form nome/telefone/endereço (CEP, logradouro, número, complemento, bairro, cidade, estado), validação inline |
 
-- Cadastro e consulta de clínicas.
-- Cadastro e consulta de especialidades.
-- Cadastro, consulta e filtragem de profissionais por nome, clínica e especialidade.
-- Consulta e atualização dos dados permitidos do paciente, respeitando as regras de acesso.
-- Cadastro e consulta de disponibilidades de atendimento.
-- Agendamento, listagem, consulta e cancelamento de consultas.
-- Validação de dados e bloqueio de conflitos de horários e agendamentos duplicados.
+---
 
-### Interface e PWA
+## Stack Tecnológico
 
-- Dashboard com navegação adaptada ao perfil autenticado.
-- Formulários integrados à API.
-- Layout responsivo para computadores e dispositivos móveis.
-- Manifesto, ícone e Service Worker para instalação como PWA.
-- Cache básico dos arquivos estáticos da interface.
+| Camada | Tecnologia |
+|--------|------------|
+| **Backend** | Node.js 22+, Express 5, MongoDB (native driver), JWT 8h, bcryptjs |
+| **IA** | Google Generative AI `@google/generative-ai`, Gemini 1.5 Pro (padrão) + fallback Anthropic, Zod validation |
+| **Mobile** | Expo SDK 58, React Native 0.88, React Navigation v6, TypeScript |
+| **Estado** | React Context (auth), local state (forms) |
+| **Storage** | expo-secure-store (JWT), AsyncStorage (opcional triagem recovery) |
+| **Notificações** | expo-notifications (local push 24h/1h antes) |
+| **Deploy** | Render Web Service (API), Render Static Site (Web PWA), EAS Build Preview (APK) |
 
-## Tecnologias utilizadas
+---
 
-| Área | Tecnologias |
-|---|---|
-| Backend | Node.js, Express 5 |
-| Banco de dados | MongoDB / MongoDB Atlas |
-| Autenticação | JSON Web Token (JWT) |
-| Hash de senhas | bcryptjs |
-| Comunicação entre origens | CORS |
-| Variáveis de ambiente | dotenv |
-| Documentação da API | Swagger UI / OpenAPI |
-| Frontend | HTML5, CSS3 e JavaScript |
-| PWA | Web App Manifest e Service Worker |
-| Versionamento | Git e GitHub |
-| Hospedagem | Render |
-
-## Estrutura do repositório
+## Estrutura do Repositório
 
 ```text
 clinagenda/
-├── backend/
-│   ├── config/
-│   │   └── database.js
-│   ├── docs/
-│   │   └── openapi.js
-│   ├── middlewares/
-│   │   └── auth.js
+├── backend/                    # API Express 5
+│   ├── config/database.js      # MongoDB + índices triagens
+│   ├── middlewares/auth.js     # JWT + RBAC
 │   ├── routes/
-│   │   ├── agendamentos.js
-│   │   ├── auth.js
-│   │   ├── clinicas.js
-│   │   ├── disponibilidades.js
-│   │   ├── especialidades.js
-│   │   ├── pacientes.js
-│   │   ├── perfis.js
-│   │   └── profissionais.js
-│   ├── scripts/
-│   │   └── criar-admin.js
-│   ├── .env                 # Arquivo local; não versionar
-│   ├── package.json
-│   ├── package-lock.json
-│   └── server.js
-├── frontend/
+│   │   ├── auth.js             # login, register, me
+│   │   ├── triagem.js          # NOVO: /triage/start, /message, /:id/result
+│   │   ├── agendamentos.js     # Extended: triagemId opcional
+│   │   ├── pacientes.js        # Extended: endereço objeto
+│   │   └── ... (clinicas, especialidades, profissionais, disponibilidades, perfis)
+│   ├── docs/openapi.js         # Swagger com endpoints triagem
+│   ├── server.js
+│   └── package.json
+├── mobile/                     # Expo RN App (Paciente)
+│   ├── src/
+│   │   ├── screens/            # 8 telas
+│   │   ├── navigation/         # Stack + Tabs tipados
+│   │   ├── context/AuthContext.tsx
+│   │   ├── services/api.ts     # Axios + SecureStore interceptor
+│   │   └── theme/index.ts      # Design system acessível
+│   ├── app.json                # Expo config + notifications plugin
+│   ├── eas.json                # EAS Build profiles
+│   └── package.json
+├── frontend/                   # Web PWA (1ª entrega)
 │   ├── index.html
 │   ├── style.css
 │   ├── app.js
 │   ├── manifest.json
 │   ├── service-worker.js
 │   └── icon.svg
-├── .gitignore
-└── README.md
+├── docs/
+│   ├── DESIGN.md               # Design completo
+│   ├── PLAN.md                 # 52 tarefas, 7 fases, timeline
+│   └── adr/                    # 6 ADRs (001-006)
+├── GLOSSARY.md                 # Terminologia do domínio
+└── ENTREGA.md                  # Documento de entrega
 ```
-
-> A estrutura acima destaca os principais arquivos do projeto. Arquivos locais de dependências, como `node_modules/`, não fazem parte do repositório.
-
-## Executar o projeto localmente
-
-### Requisitos
-
-- Node.js e npm instalados.
-- Uma instância MongoDB acessível (por exemplo, MongoDB Atlas).
-- Visual Studio Code com a extensão Live Server, ou outro servidor HTTP local.
-- Navegador moderno com suporte a JavaScript, Service Worker e PWA.
-
-### 1. Clonar o repositório
-
-```bash
-git clone https://github.com/varasdev/clinagenda.git
-cd clinagenda
-```
-
-### 2. Configurar e iniciar o backend
-
-Abra um terminal na pasta `backend/`:
-
-```bash
-cd backend
-npm install
-```
-
-Crie um arquivo `.env` dentro de `backend/` com as variáveis necessárias:
-
-```env
-MONGODB_URI=sua_string_de_conexao_mongodb
-DB_NAME=test
-PORT=3000
-JWT_SECRET=sua_chave_secreta
-```
-
-Use uma string de conexão válida e o nome do banco que contém as coleções do projeto. O valor `test` é o banco utilizado no ambiente atual do projeto; em outra instalação, ajuste `DB_NAME` conforme o banco configurado.
-
-Inicie a API:
-
-```bash
-node server.js
-```
-
-Com a configuração padrão, a API fica disponível localmente em `http://localhost:3000`. A rota `/` retorna uma mensagem para verificar se a API está funcionando, e a documentação Swagger fica em `http://localhost:3000/docs`.
-
-### 3. Abrir o frontend
-
-Em outro terminal, volte à raiz do projeto e abra `frontend/index.html` com o Live Server pelo VS Code. O endereço local será semelhante a `http://127.0.0.1:5500/`.
-
-O frontend utiliza a constante `API_URL`, declarada no início de `frontend/app.js`, para definir o endereço do backend. Para desenvolvimento local, configure-a para:
-
-```javascript
-const API_URL = "http://localhost:3000";
-```
-
-Na versão publicada, essa constante deve apontar para a API hospedada:
-
-```javascript
-const API_URL = "https://clinagenda-api.onrender.com";
-```
-
-Depois de alterar o endereço, salve o arquivo e recarregue a página. Mantenha o backend local em execução quando estiver usando `localhost`.
-
-> Para testar o PWA, acesse o frontend por HTTP em `localhost` ou por HTTPS. Abrir o HTML diretamente pelo esquema `file://` não permite validar corretamente o Service Worker.
-
-## API e documentação
-
-A API utiliza endpoints REST organizados por recurso. A documentação interativa está disponível em:
-
-- Local: `http://localhost:3000/docs`
-- Publicada: [https://clinagenda-api.onrender.com/docs](https://clinagenda-api.onrender.com/docs)
-
-### Principais endpoints
-
-| Método | Endpoint | Descrição / acesso |
-|---|---|---|
-| `GET` | `/` | Verificar se a API está funcionando |
-| `POST` | `/auth/register` | Cadastro público de paciente |
-| `POST` | `/auth/login` | Login de usuário |
-| `GET` | `/auth/me` | Consultar usuário autenticado — JWT |
-| `POST` | `/auth/usuarios/profissional` | Criar conta de profissional — administrador |
-| `GET` | `/perfis/paciente` | Rota de teste de permissão — paciente |
-| `GET` | `/perfis/profissional` | Rota de teste de permissão — profissional |
-| `GET` | `/perfis/administrador` | Rota de teste de permissão — administrador |
-| `GET` / `POST` | `/clinicas` | Listar/filtrar clínicas; cadastrar clínica — administrador no cadastro |
-| `GET` / `POST` | `/especialidades` | Listar especialidades; cadastrar — administrador no cadastro |
-| `GET` / `POST` | `/profissionais` | Listar/filtrar profissionais; cadastrar — administrador no cadastro |
-| `GET` / `POST` | `/pacientes` | Listar/cadastrar pacientes — operações administrativas protegidas |
-| `GET` / `PUT` | `/pacientes/:id` | Consultar/atualizar paciente, conforme perfil e autorização |
-| `GET` / `POST` | `/disponibilidades` | Consultar/cadastrar disponibilidades, conforme perfil e autorização |
-| `GET` / `POST` | `/agendamentos` | Listar agendamentos conforme perfil; paciente cria agendamento |
-| `GET` | `/agendamentos/:id` | Consultar agendamento por ID, conforme autorização |
-| `PUT` | `/agendamentos/:id/cancelar` | Cancelar agendamento, conforme autorização |
-
-As rotas protegidas exigem o cabeçalho de autorização:
-
-```http
-Authorization: Bearer SEU_TOKEN
-```
-
-O token é obtido em `POST /auth/login`. No Swagger UI, use **Authorize** para informar o token antes de executar operações protegidas.
-
-## Perfis e permissões
-
-- **Paciente:** pode consultar e atualizar os próprios dados permitidos, consultar informações de atendimento, realizar agendamentos e acompanhar/cancelar suas consultas conforme as regras da API.
-- **Profissional:** pode gerenciar suas próprias disponibilidades e consultar os agendamentos permitidos ao seu perfil.
-- **Administrador:** pode executar operações administrativas, incluindo cadastros protegidos, criação de acessos de profissionais e gerenciamento de agendamentos conforme as regras da API.
-
-O cadastro público cria somente contas de pacientes. Contas de profissionais são criadas por um administrador e vinculadas a um registro de profissional existente. A interface pode ocultar opções conforme o perfil, mas a autorização efetiva é validada pelo backend.
-
-## Segurança
-
-- As senhas são armazenadas como **hashes gerados com bcryptjs**; não são guardadas em texto puro nem recuperadas por descriptografia.
-- Durante o login, `bcrypt.compare()` verifica a senha informada em relação ao hash armazenado.
-- A autenticação utiliza JWT, com validade configurada no backend.
-- O frontend mantém o token em `sessionStorage` durante a sessão e o envia no cabeçalho `Authorization` nas requisições protegidas.
-- As permissões são verificadas nas rotas do backend; controles visuais no frontend não substituem essas verificações.
-- O arquivo `.env`, senhas, tokens, chaves JWT e strings de conexão não devem ser enviados ao GitHub nem compartilhados.
-
-## PWA e funcionamento offline
-
-O `manifest.json` contém os metadados de instalação, como nome, ícone e modo de exibição. O `service-worker.js` armazena em cache os arquivos estáticos principais da interface.
-
-O suporte offline é **limitado à estrutura estática previamente carregada**. Login, acesso ao banco, consulta de dados, agendamentos, cancelamentos e demais operações da API exigem conexão com o backend. O Service Worker não armazena dados pessoais ou consultas para uso offline.
-
-Em produção, o PWA deve ser acessado por HTTPS. Após alterações nos arquivos estáticos, atualize o navegador; se necessário, confira o registro e o cache do Service Worker em DevTools → Application.
-
-## Testes manuais realizados
-
-Durante o desenvolvimento, foram realizados testes manuais, incluindo:
-
-- Login de administrador, profissional e paciente.
-- Controle de permissões, incluindo resposta `403 Forbidden` para tentativa de operação administrativa por paciente.
-- Cadastro de especialidade por administrador.
-- Criação de conta vinculada a profissional.
-- Cadastro de disponibilidade pelo profissional.
-- Agendamento de consulta por paciente.
-- Bloqueio de tentativa de agendar novamente o mesmo horário, com resposta `409 Conflict`.
-- Listagem e cancelamento de consultas pela interface.
-- Consulta de clínicas, especialidades e profissionais no frontend.
-- Registro do Service Worker e abertura da aplicação como PWA.
-- Testes do fluxo principal na versão publicada.
-
-Esses testes foram manuais; este README não declara a existência de uma suíte automatizada de testes.
-
-## Implantação
-
-O projeto está publicado na plataforma Render em dois serviços:
-
-- **Backend:** serviço Web que executa `node server.js` a partir da pasta `backend/`.
-- **Frontend:** Static Site que publica os arquivos da pasta `frontend/`.
-
-As variáveis de ambiente do backend são configuradas no painel de hospedagem. O arquivo `.env` local não é enviado ao repositório. O frontend utiliza a URL HTTPS pública da API definida em `frontend/app.js`.
-
-## Observações
-
-- Este projeto foi desenvolvido para fins acadêmicos como Projeto Integrador.
-- O funcionamento das operações depende da disponibilidade do backend e do MongoDB.
-- O cache do PWA não representa funcionamento completo offline.
-- Ao alterar endpoints ou formatos de resposta da API, revise a integração no `frontend/app.js` e atualize a documentação Swagger e este README.
-- Para executar o projeto em outro ambiente, configure suas próprias credenciais e variáveis; nunca reutilize ou exponha segredos em arquivos públicos.
 
 ---
 
-**ClínAgenda — Projeto Integrador**
+## Como Executar
+
+### Backend (API)
+```bash
+cd backend
+cp .env.example .env   # Configure MONGODB_URI, JWT_SECRET, ANTHROPIC_API_KEY
+npm install
+npm start              # http://localhost:3000
+# Swagger: http://localhost:3000/docs
+```
+
+### Mobile (Expo)
+```bash
+cd mobile
+npm install
+npx expo start         # Expo Go ou Dev Build
+# Para build APK preview:
+npx eas-cli build --profile preview --platform android
+```
+
+### Variáveis de Ambiente
+
+**Backend (`.env`):**
+```env
+MONGODB_URI=mongodb+srv://...
+DB_NAME=clinagenda
+PORT=3000
+JWT_SECRET=...
+GOOGLE_API_KEY=sua-chave-gemini    # Gemini (padrão)
+ANTHROPIC_API_KEY=sk-ant-...       # Fallback opcional
+AI_PROVIDER=gemini                 # "gemini" | "anthropic"
+RATE_LIMIT_TRIAGE=10
+```
+
+**Mobile (`.env.local`):**
+```env
+EXPO_PUBLIC_API_URL=https://clinagenda-api.onrender.com
+```
+
+**EAS Build (`eas.json` preview):**
+```json
+"preview": {
+  "distribution": "internal",
+  "android": { "buildType": "apk" },
+  "env": { "EXPO_PUBLIC_API_URL": "https://clinagenda-api.onrender.com" }
+}
+```
+
+---
+
+## Deploy (Produção)
+
+| Componente | Plataforma | Configuração |
+|------------|------------|--------------|
+| **API** | Render Web Service | Node 22, `npm start`, env vars no dashboard |
+| **Web PWA** | Render Static Site | `frontend/` folder |
+| **Mobile APK** | EAS Build Preview | `eas build --profile preview --platform android` → instala via link |
+
+### Variáveis no Render (Backend)
+```
+MONGODB_URI=...
+DB_NAME=clinagenda
+PORT=3000
+JWT_SECRET=...
+GOOGLE_API_KEY=...              # Gemini (padrão)
+ANTHROPIC_API_KEY=sk-ant-...    # Fallback opcional
+AI_PROVIDER=gemini              # "gemini" | "anthropic"
+RATE_LIMIT_TRIAGE=10
+```
+
+---
+
+## Pré-triagem com IA — Detalhes Técnicos
+
+### Endpoints
+- `POST /triage/start` — Inicia sessão, retorna `sessionId` + primeira pergunta
+- `POST /triage/message` — Envia mensagem, retorna próxima pergunta OU recomendação OU emergência
+- `GET /triage/:sessionId/result` — Histórico completo da triagem
+
+### Fluxo IA (Provider Pattern)
+```
+TriageAiProvider (interface)
+  ├─ GeminiProvider (gemini-1.5-pro) ← PADRÃO
+  └─ AnthropicProvider (claude-opus-5-5) ← FALLBACK
+       ├─ System prompt fixo (português, idoso-friendly, JSON output)
+       ├─ Zod validation no response
+       ├─ Mapeamento especialidades IA → IDs banco (sinônimos)
+       ├─ Fallback determinístico se API falhar
+       └─ Detecção emergência ANTES da IA (keywords: dor no peito, falta de ar, AVC, etc.)
+```
+
+### Coleção `triagens` (MongoDB)
+```javascript
+{
+  pacienteId: ObjectId,
+  resumo: string,              // ≤500 chars
+  sintomas: [string],
+  duracao: string,
+  intensidade: number,         // 0-10
+  especialidadesSugerida: [{ especialidadeId, nome, reason, confidence }],
+  emergency: boolean,
+  avisoExibido: boolean,
+  consultaId: ObjectId,        // unique sparse index
+  criadoEm: Date
+}
+```
+
+### Integração Triagem → Agendamento
+- TriagemResultadoScreen passa `triagemId` para AgendarScreen
+- AgendarScreen envia `triagemId` no POST `/agendamentos`
+- Backend usa transação MongoDB: cria agendamento + atualiza `triagens.consultaId` atomicamente
+- Índice único sparse em `triagens.consultaId` garante 1:1
+
+---
+
+## Segurança & LGPD
+
+| Medida | Implementação |
+|--------|---------------|
+| Chave IA só no backend | `GOOGLE_API_KEY` / `ANTHROPIC_API_KEY` em env Render; **nunca no app RN** |
+| Dados sensíveis minimizados | IA recebe só sintomas/duração/intensidade (sem nome/CPF/telefone) |
+| Logs sem saúde | `console.log` no backend não inclui `reply` nem `collected` |
+| Vínculo só ao paciente | `triagens.pacienteId` = paciente logado |
+| Aviso transparência | `disclaimer` obrigatório em `stage=recommendation`; `avisoExibido=true` persistido |
+| Emergência determinística | Keywords check ANTES de chamar IA → `emergency=true` imediato |
+
+---
+
+## Acessibilidade (Idosos)
+- Fonte mínima **16sp**
+- Área de toque mínima **48dp** (`minTouchTarget`)
+- Contraste **WCAG AA** (cores do theme)
+- Labels TalkBack/VoiceOver em todos elementos interativos (`a11y.*` helpers)
+- Uma pergunta por vez no chatbot
+- DatePicker nativo para seleção de data
+
+---
+
+## Critérios de Aceite (Avaliação)
+
+| Critério | Peso | Status |
+|----------|------|--------|
+| **Triage/IA (15%)** | Chatbot funcional, JSON estruturado, fallback, emergência, persistência, disclaimer | ✅ |
+| **RN App (10%)** | 8 telas, navegação, TypeScript, theme, acessibilidade | ✅ |
+| **Agendamento (10%)** | 3-step wizard, disponibilidade dinâmica, conflito 409, cancelar | ✅ |
+| **Auth/Perfis (5%)** | JWT 8h, SecureStore, login/logout, perfil editável | ✅ |
+| **Backend/DB (5%)** | Novos endpoints, coleção triagens, índices, transação vínculo | ✅ |
+| **UX Acessibilidade (5%)** | Fonte ≥16sp, toque ≥48dp, contraste AA, labels | ✅ |
+| **Integração Triagem→Agendamento (5%)** | triagemId passado, vínculo 1:1 no banco | ✅ |
+| **Deploy/Demo (5%)** | Render API, EAS Build APK, Swagger docs | ✅ Configurado |
+
+---
+
+## Próximos Passos (Pós-MVP / Polimento 04–08/12)
+
+- [ ] Notificações push locais (24h/1h antes) — `expo-notifications` + `useNotificationPermissions`
+- [ ] Testes E2E: login → triagem → agendamento → listagem → cancelar
+- [ ] Rate limiting `/triage/*` (10 req/min/IP)
+- [ ] Recovery de sessão triagem (AsyncStorage)
+- [ ] Web PWA update (1ª entrega) para consumir nova API
+- [ ] Screenshots/demo GIF para documentação
+
+---
+
+## Contatos
+
+- **Equipe:** [Nomes dos integrantes]
+- **Curso:** [Nome do curso/universidade]
+- **Orientador:** [Nome do orientador]
+
+---
+
+**Última atualização:** 2026-11-24  
+**Versão:** 2.0.0 (2ª Entrega — MVP ready)

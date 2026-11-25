@@ -52,7 +52,8 @@ const openapi = {
         { name: "Profissionais" },
         { name: "Pacientes" },
         { name: "Disponibilidades" },
-        { name: "Agendamentos" }
+        { name: "Agendamentos" },
+        { name: "Triagem" }
     ],
 
     components: {
@@ -236,6 +237,91 @@ const openapi = {
                         type: "string",
                         example: "08:30"
                     }
+                }
+            },
+
+            TriagemStartResponse: {
+                type: "object",
+                properties: {
+                    sessionId: { type: "string", format: "uuid" },
+                    stage: { type: "string", enum: ["collecting"] },
+                    reply: { type: "string" },
+                    collected: {
+                        type: "object",
+                        properties: {
+                            symptoms: { type: "array", items: { type: "string" } },
+                            duration: { type: "string", nullable: true },
+                            intensity: { type: "integer", minimum: 0, maximum: 10, nullable: true }
+                        }
+                    },
+                    specialties: { type: "array", items: { type: "object" } },
+                    emergency: { type: "boolean" }
+                }
+            },
+
+            TriagemMessageRequest: {
+                type: "object",
+                required: ["sessionId", "message"],
+                properties: {
+                    sessionId: { type: "string", format: "uuid" },
+                    message: { type: "string", maxLength: 500 }
+                }
+            },
+
+            TriagemMessageResponse: {
+                type: "object",
+                properties: {
+                    stage: { type: "string", enum: ["collecting", "recommendation", "emergency"] },
+                    reply: { type: "string" },
+                    collected: {
+                        type: "object",
+                        properties: {
+                            symptoms: { type: "array", items: { type: "string" } },
+                            duration: { type: "string", nullable: true },
+                            intensity: { type: "integer", minimum: 0, maximum: 10, nullable: true }
+                        }
+                    },
+                    specialties: {
+                        type: "array",
+                        items: {
+                            type: "object",
+                            properties: {
+                                especialidadeId: { type: "string" },
+                                nome: { type: "string" },
+                                reason: { type: "string" },
+                                confidence: { type: "string", enum: ["alta", "media", "baixa"] }
+                            }
+                        }
+                    },
+                    emergency: { type: "boolean" },
+                    disclaimer: { type: "string" },
+                    triagemId: { type: "string" }
+                }
+            },
+
+            TriagemResultado: {
+                type: "object",
+                properties: {
+                    triagemId: { type: "string" },
+                    resumo: { type: "string" },
+                    sintomas: { type: "array", items: { type: "string" } },
+                    duracao: { type: "string" },
+                    intensidade: { type: "integer" },
+                    especialidadesSugeridas: {
+                        type: "array",
+                        items: {
+                            type: "object",
+                            properties: {
+                                especialidadeId: { type: "string" },
+                                nome: { type: "string" },
+                                reason: { type: "string" },
+                                confidence: { type: "string", enum: ["alta", "media", "baixa"] }
+                            }
+                        }
+                    },
+                    emergency: { type: "boolean" },
+                    avisoExibido: { type: "boolean" },
+                    criadoEm: { type: "string", format: "date-time" }
                 }
             }
         }
@@ -626,6 +712,100 @@ const openapi = {
                     "403": resposta("Sem permissão para cancelar."),
                     "404": resposta("Agendamento não encontrado."),
                     "409": resposta("Agendamento já cancelado ou não está mais ativo.")
+                }
+            }
+        },
+
+        "/triage/start": {
+            post: {
+                tags: ["Triagem"],
+                summary: "Iniciar pré-triagem",
+                description: "Cria uma nova sessão de pré-triagem para o paciente autenticado.",
+                security: autenticacao,
+                requestBody: {
+                    required: true,
+                    content: {
+                        "application/json": {
+                            schema: { type: "object" }
+                        }
+                    }
+                },
+                responses: {
+                    "201": {
+                        description: "Sessão de triagem iniciada.",
+                        content: {
+                            "application/json": {
+                                schema: { $ref: "#/components/schemas/TriagemStartResponse" }
+                            }
+                        }
+                    },
+                    "401": resposta("Não autenticado."),
+                    "500": resposta("Erro ao iniciar triagem.")
+                }
+            }
+        },
+
+        "/triage/message": {
+            post: {
+                tags: ["Triagem"],
+                summary: "Enviar mensagem na triagem",
+                description: "Envia uma mensagem do paciente para a IA de triagem. Retorna a próxima pergunta, recomendação ou orientação de emergência.",
+                security: autenticacao,
+                requestBody: {
+                    required: true,
+                    content: {
+                        "application/json": {
+                            schema: { $ref: "#/components/schemas/TriagemMessageRequest" }
+                        }
+                    }
+                },
+                responses: {
+                    "200": {
+                        description: "Resposta da triagem.",
+                        content: {
+                            "application/json": {
+                                schema: { $ref: "#/components/schemas/TriagemMessageResponse" }
+                            }
+                        }
+                    },
+                    "400": resposta("Dados inválidos ou sessão finalizada."),
+                    "401": resposta("Não autenticado."),
+                    "403": resposta("Acesso negado à sessão."),
+                    "404": resposta("Sessão não encontrada ou expirada."),
+                    "500": resposta("Erro ao processar mensagem.")
+                }
+            }
+        },
+
+        "/triage/{sessionId}/result": {
+            get: {
+                tags: ["Triagem"],
+                summary: "Obter resultado da triagem",
+                description: "Retorna o resultado completo de uma triagem finalizada.",
+                security: autenticacao,
+                parameters: [
+                    {
+                        name: "sessionId",
+                        in: "path",
+                        required: true,
+                        description: "ID da sessão de triagem (UUID).",
+                        schema: { type: "string", format: "uuid" }
+                    }
+                ],
+                responses: {
+                    "200": {
+                        description: "Resultado da triagem.",
+                        content: {
+                            "application/json": {
+                                schema: { $ref: "#/components/schemas/TriagemResultado" }
+                            }
+                        }
+                    },
+                    "400": resposta("ID de sessão inválido."),
+                    "401": resposta("Não autenticado."),
+                    "403": resposta("Acesso negado."),
+                    "404": resposta("Triagem não encontrada."),
+                    "500": resposta("Erro ao buscar resultado.")
                 }
             }
         }
