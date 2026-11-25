@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "ClinAgenda",
+    "slug": "clinagenda",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.clinagenda.mobile",
+      "infoPlist": {
+        "NSUserNotificationsPermission": "ClinAgenda envia lembretes das suas consultas agendadas."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png"
+      },
+      "package": "com.clinagenda.mobile",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE"
+      ],
+      "predictiveBackGestureEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#006B4F"
+        }
+      ],
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f9bad4eb-0e14-43b8-8c7f-fef3cd6b988f"
+      }
+    },
+    "owner": "varasdev"
+  }
+}

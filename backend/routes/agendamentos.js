@@ -120,7 +120,8 @@ router.post(
                 profissionalId,
                 data,
                 hora,
-                observacoes = ""
+                observacoes = "",
+                triagemId
             } = req.body;
 
             if (!profissionalId || !data || !hora) {
@@ -157,6 +158,12 @@ router.post(
                 return res.status(400).json({
                     mensagem:
                         "As observações devem ser um texto de até 1000 caracteres."
+                });
+            }
+
+            if (triagemId !== undefined && !idValido(triagemId)) {
+                return res.status(400).json({
+                    mensagem: "ID da triagem inválido."
                 });
             }
 
@@ -282,16 +289,38 @@ router.post(
                 criadoEm: new Date()
             };
 
-            const resultado = await banco
-                .collection("agendamentos")
-                .insertOne(agendamento);
+            // Usar transação para criar agendamento e atualizar triagem atomicamente
+            const session = banco.client.startSession();
+            let agendamentoId;
+            try {
+                await session.withTransaction(async () => {
+                    const resultado = await banco
+                        .collection("agendamentos")
+                        .insertOne(agendamento, { session });
+                    agendamentoId = resultado.insertedId;
+
+                    // Atualiza triagem com consultaId se fornecida
+                    if (triagemId) {
+                        await banco.collection("triagens").updateOne(
+                            {
+                                _id: new ObjectId(triagemId),
+                                pacienteId: pacienteObjectId
+                            },
+                            { $set: { consultaId: agendamentoId } },
+                            { session }
+                        );
+                    }
+                });
+            } finally {
+                await session.endSession();
+            }
 
             return res.status(201).json({
                 mensagem: "Agendamento realizado com sucesso!",
-                id: resultado.insertedId,
+                id: agendamentoId,
                 agendamento: {
                     ...agendamento,
-                    _id: resultado.insertedId
+                    _id: agendamentoId
                 }
             });
         } catch (erro) {
