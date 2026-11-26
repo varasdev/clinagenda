@@ -29,6 +29,15 @@ const api: AxiosInstance = axios.create({
   },
 });
 
+// Separate instance for triage endpoints (45s timeout)
+const triageApiInstance: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 45000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 // Request interceptor: attach JWT token
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
@@ -41,59 +50,65 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: handle 401, network errors, standardize error format
-api.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
-    // Network error (no response)
-    if (!error.response) {
-      const networkError: ApiError = {
-        code: 'NETWORK_ERROR',
-        message: 'Não foi possível conectar à API. Verifique sua conexão com a internet.',
-      };
-      return Promise.reject(networkError);
-    }
+// Shared interceptors
+function attachInterceptors(instance: AxiosInstance) {
+  instance.interceptors.request.use(
+    async (config: InternalAxiosRequestConfig) => {
+      const token = await SecureStore.getItemAsync(TOKEN_KEY);
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
 
-    // 401 Unauthorized: token expired or invalid
-    if (error.response.status === 401) {
-      await clearAuthData();
-      // Note: Navigation reset to login should be handled by the auth context
-      const authError: ApiError = {
-        code: 'UNAUTHORIZED',
-        message: 'Sessão expirada. Faça login novamente.',
-      };
-      return Promise.reject(authError);
-    }
-
-    // 403 Forbidden
-    if (error.response.status === 403) {
-      const forbiddenError: ApiError = {
-        code: 'FORBIDDEN',
-        message: 'Você não tem permissão para realizar esta ação.',
-      };
-      return Promise.reject(forbiddenError);
-    }
-
-    // 409 Conflict (e.g., horário ocupado)
-    if (error.response.status === 409) {
+  instance.interceptors.response.use(
+    (response) => response,
+    async (error: AxiosError) => {
+      if (!error.response) {
+        const networkError: ApiError = {
+          code: 'NETWORK_ERROR',
+          message: 'Não foi possível conectar à API. Verifique sua conexão com a internet.',
+        };
+        return Promise.reject(networkError);
+      }
+      if (error.response.status === 401) {
+        await clearAuthData();
+        const authError: ApiError = {
+          code: 'UNAUTHORIZED',
+          message: 'Sessão expirada. Faça login novamente.',
+        };
+        return Promise.reject(authError);
+      }
+      if (error.response.status === 403) {
+        const forbiddenError: ApiError = {
+          code: 'FORBIDDEN',
+          message: 'Você não tem permissão para realizar esta ação.',
+        };
+        return Promise.reject(forbiddenError);
+      }
+      if (error.response.status === 409) {
+        const data = error.response.data as { message?: string } | undefined;
+        const conflictError: ApiError = {
+          code: 'CONFLICT',
+          message: data?.message || 'Conflito: o recurso já existe ou está indisponível.',
+        };
+        return Promise.reject(conflictError);
+      }
       const data = error.response.data as { message?: string } | undefined;
-      const conflictError: ApiError = {
-        code: 'CONFLICT',
-        message: data?.message || 'Conflito: o recurso já existe ou está indisponível.',
+      const apiError: ApiError = {
+        code: `HTTP_${error.response.status}`,
+        message: data?.message || error.message || 'Erro desconhecido.',
+        details: error.response.data,
       };
-      return Promise.reject(conflictError);
+      return Promise.reject(apiError);
     }
+  );
+}
 
-    // Other errors: use backend message if available
-    const data = error.response.data as { message?: string } | undefined;
-    const apiError: ApiError = {
-      code: `HTTP_${error.response.status}`,
-      message: data?.message || error.message || 'Erro desconhecido.',
-      details: error.response.data,
-    };
-    return Promise.reject(apiError);
-  }
-);
+attachInterceptors(api);
+attachInterceptors(triageApiInstance);
 
 // Auth storage helpers
 export const authStorage = {
@@ -154,10 +169,10 @@ export const authApi = {
   },
 };
 
-// Triagem endpoints
+// Triagem endpoints (usam instância com timeout 45s)
 export const triagemApi = {
   async start() {
-    const response = await api.post<{
+    const response = await triageApiInstance.post<{
       sessionId: string;
       stage: 'collecting' | 'recommendation' | 'emergency';
       reply: string;
@@ -171,7 +186,7 @@ export const triagemApi = {
   },
 
   async sendMessage(sessionId: string, message: string) {
-    const response = await api.post<{
+    const response = await triageApiInstance.post<{
       stage: 'collecting' | 'recommendation' | 'emergency';
       reply: string;
       collected: { symptoms: string[]; duration: string | null; intensity: number | null };
@@ -184,7 +199,7 @@ export const triagemApi = {
   },
 
   async getResult(sessionId: string) {
-    const response = await api.get<{
+    const response = await triageApiInstance.get<{
       triagemId: string;
       resumo: string;
       sintomas: string[];
