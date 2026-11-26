@@ -111,14 +111,28 @@ class GeminiProvider extends TriageAiProvider {
     this.client = new GoogleGenerativeAI(apiKey);
     // Modelo configurável via env GEMINI_MODEL, default para gemini-2.5-flash (gemini-1.5-pro depreciado)
     const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    // Configuração de geração: reduzir "pensamento", maxOutputTokens alto para JSON não cortar
+    const generationConfig = {
+      temperature: 0.3,
+      maxOutputTokens: 8192,
+      responseMimeType: "application/json",
+    };
+    // Tentar desativar/minimizar thinking (Gemini 2.5+). Se SDK não suportar, ignora silenciosamente.
+    try {
+      // Para modelos 2.5: thinkingBudget: 0 desativa thinking
+      // Para modelos 3+: thinkingConfig: { thinkingLevel: "minimal" }
+      if (modelName.includes("2.5")) {
+        generationConfig.thinkingBudget = 0;
+      } else {
+        generationConfig.thinkingConfig = { thinkingLevel: "minimal" };
+      }
+    } catch (_) {
+      // SDK pode não expor esses campos; segue com config padrão
+    }
     this.model = this.client.getGenerativeModel({
       model: modelName,
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 1024,
-        responseMimeType: "application/json",
-      },
-      systemInstruction: SYSTEM_PROMPT, // systemInstruction movido para getGenerativeModel
+      generationConfig,
+      systemInstruction: SYSTEM_PROMPT,
     });
   }
 
@@ -252,13 +266,30 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 // ==========================================
-// CHAMADA À IA (USA PROVIDER SELECIONADO)
+// CHAMADA À IA (USA PROVIDER SELECIONADO) — com timeout 12s e log de tempo
 // ==========================================
-async function callAi(messages) {
+const AI_TIMEOUT_MS = 12000; // 12s (app mobile tem 15s)
+
+async function callAi(messages, sessionMessages = []) {
   if (!aiProvider) {
     throw new Error("Nenhum provedor de IA configurado");
   }
-  return aiProvider.call(messages, SYSTEM_PROMPT);
+  const start = Date.now();
+  try {
+    const promise = aiProvider.call(messages, SYSTEM_PROMPT);
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("IA timeout")), AI_TIMEOUT_MS)
+    );
+    const result = await Promise.race([promise, timeout]);
+    const elapsed = Date.now() - start;
+    console.log(`Gemini respondeu em ${elapsed}ms`);
+    return result;
+  } catch (error) {
+    const elapsed = Date.now() - start;
+    console.error(`Erro IA (${elapsed}ms):`, error.message);
+    // Timeout ou erro → fallback determinístico usando mensagens da sessão
+    throw error; // será capturado na rota e usará deterministicFallback
+  }
 }
 
 // ==========================================
@@ -412,7 +443,7 @@ router.post("/message", autenticar, async (req, res) => {
 
     let aiResult;
     try {
-      const aiResponseText = await callAi(aiMessages);
+      const aiResponseText = await callAi(aiMessages, session.messages);
       const parsed = JSON.parse(aiResponseText);
       aiResult = TriageOutputSchema.parse(parsed);
     } catch (aiError) {
