@@ -64,71 +64,7 @@ const MessageTriageResponseSchema = z.object({
 });
 
 // ==========================================
-// PROVIDER PATTERN: TriageAiProvider Interface
-// ==========================================
-class TriageAiProvider {
-  async call(messages, systemPrompt) {
-    throw new Error("Not implemented");
-  }
-}
-
-// --- Gemini Provider ---
-class GeminiProvider extends TriageAiProvider {
-  constructor(apiKey) {
-    super();
-    this.client = new GoogleGenerativeAI(apiKey);
-    this.model = this.client.getGenerativeModel({
-      model: "gemini-1.5-pro",
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 1024,
-        responseMimeType: "application/json",
-      },
-    });
-  }
-
-  async call(messages, systemPrompt) {
-    try {
-      // Gemini usa formato diferente: system instruction + user/model turns
-      const chat = this.model.startChat({
-        history: messages.slice(0, -1).map(m => ({
-          role: m.role === "assistant" ? "model" : "user",
-          parts: [{ text: m.content }],
-        })),
-        systemInstruction: systemPrompt,
-      });
-
-      const lastMessage = messages[messages.length - 1];
-      const result = await chat.sendMessage(lastMessage.content);
-      const response = result.response;
-      return response.text();
-    } catch (error) {
-      console.error("Erro Gemini:", error.message);
-      throw error;
-    }
-  }
-}
-
-// Factory para criar provedor Gemini
-function createAiProvider() {
-  // Valida formato da chave da API Google
-  function isValidGoogleKey(key) {
-    return key && key.startsWith("AIza") && key.length > 20;
-  }
-
-  const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
-  if (!apiKey || !isValidGoogleKey(apiKey)) {
-    console.warn("GOOGLE_API_KEY inválida ou não configurada, usando fallback determinístico");
-    return null;
-  }
-  console.log("Usando provedor: Gemini (gemini-1.5-pro)");
-  return new GeminiProvider(apiKey);
-}
-
-const aiProvider = createAiProvider();
-
-// ==========================================
-// SYSTEM PROMPT (COMPARTILHADO ENTRE PROVEDORES)
+// SYSTEM PROMPT (COMPARTILHADO ENTRE PROVEDORES) — deve vir antes do GeminiProvider
 // ==========================================
 const SYSTEM_PROMPT = `Você é um assistente de pré-triagem médica para um aplicativo de agendamento de consultas (ClinAgenda).
 Seu objetivo é coletar informações do paciente para recomendar a especialidade médica mais adequada.
@@ -158,6 +94,78 @@ OUTPUT SCHEMA (JSON):
   ],
   "emergency": boolean
 }`;
+
+// ==========================================
+// PROVIDER PATTERN: TriageAiProvider Interface
+// ==========================================
+class TriageAiProvider {
+  async call(messages, systemPrompt) {
+    throw new Error("Not implemented");
+  }
+}
+
+// --- Gemini Provider ---
+class GeminiProvider extends TriageAiProvider {
+  constructor(apiKey) {
+    super();
+    this.client = new GoogleGenerativeAI(apiKey);
+    // Modelo configurável via env GEMINI_MODEL, default para gemini-2.5-flash (gemini-1.5-pro depreciado)
+    const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    this.model = this.client.getGenerativeModel({
+      model: modelName,
+      generationConfig: {
+        temperature: 0.3,
+        maxOutputTokens: 1024,
+        responseMimeType: "application/json",
+      },
+      systemInstruction: SYSTEM_PROMPT, // systemInstruction movido para getGenerativeModel
+    });
+  }
+
+  async call(messages, systemPrompt) {
+    try {
+      // Fix 1: Descartar primeira mensagem se for assistant (histórico não pode começar com model)
+      const filteredMessages = messages.length > 0 && messages[0].role === "assistant"
+        ? messages.slice(1)
+        : messages;
+
+      // Gemini usa formato: user/model turns (systemInstruction já no model config)
+      const chat = this.model.startChat({
+        history: filteredMessages.slice(0, -1).map(m => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.content }],
+        })),
+      });
+
+      const lastMessage = filteredMessages[filteredMessages.length - 1];
+      const result = await chat.sendMessage(lastMessage.content);
+      const response = result.response;
+      return response.text();
+    } catch (error) {
+      console.error("Erro Gemini:", error.message);
+      throw error;
+    }
+  }
+}
+
+// Factory para criar provedor Gemini
+function createAiProvider() {
+  // Valida formato da chave da API Google
+  function isValidGoogleKey(key) {
+    return key && (key.startsWith("AIza") || key.startsWith("AQ")) && key.length > 20;
+  }
+
+  const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey || !isValidGoogleKey(apiKey)) {
+    console.warn("GOOGLE_API_KEY inválida ou não configurada, usando fallback determinístico");
+    return null;
+  }
+  const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  console.log(`Usando provedor: Gemini (${modelName})`);
+  return new GeminiProvider(apiKey);
+}
+
+const aiProvider = createAiProvider();
 
 // ==========================================
 // PALAVRAS-CHAVE DE EMERGÊNCIA (DETERMINÍSTICO)
@@ -256,8 +264,17 @@ async function callAi(messages) {
 // ==========================================
 // FALLBACK DETERMINÍSTICO (SE IA FALHAR)
 // ==========================================
-function deterministicFallback(collected) {
-  const symptoms = collected.symptoms.join(" ").toLowerCase();
+function deterministicFallback(collected, sessionMessages = []) {
+  // Fix 3: Se collected.symptoms vazio, extrair texto das mensagens do user
+  let symptoms = collected.symptoms.join(" ").toLowerCase();
+  if (symptoms === "" && sessionMessages.length > 0) {
+    const userMessages = sessionMessages
+      .filter(m => m.role === "user")
+      .map(m => m.content)
+      .join(" ")
+      .toLowerCase();
+    symptoms = userMessages;
+  }
   let specialties = ["Clínico Geral"];
 
   if (symptoms.includes("coração") || symptoms.includes("pressão") || symptoms.includes("hipertens")) {
@@ -400,7 +417,7 @@ router.post("/message", autenticar, async (req, res) => {
       aiResult = TriageOutputSchema.parse(parsed);
     } catch (aiError) {
       console.error("Erro IA, usando fallback:", aiError.message);
-      aiResult = deterministicFallback(session.collected);
+      aiResult = deterministicFallback(session.collected, session.messages);
     }
 
     session.collected = aiResult.collected;
