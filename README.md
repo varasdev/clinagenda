@@ -114,7 +114,7 @@ clinagenda/
 ### Backend (API)
 ```bash
 cd backend
-cp .env.example .env   # Configure MONGODB_URI, JWT_SECRET, ANTHROPIC_API_KEY
+cp .env.example .env   # Configure MONGODB_URI, JWT_SECRET, GOOGLE_API_KEY
 npm install
 npm start              # http://localhost:3000
 # Swagger: http://localhost:3000/docs
@@ -138,8 +138,8 @@ DB_NAME=clinagenda
 PORT=3000
 JWT_SECRET=...
 GOOGLE_API_KEY=sua-chave-gemini    # Gemini (padrão)
-ANTHROPIC_API_KEY=sk-ant-...       # Fallback opcional
-AI_PROVIDER=gemini                 # "gemini" | "anthropic"
+GOOGLE_API_KEY=sk-ant-...       # Fallback opcional
+# AI_PROVIDER=gemini (fixed: gemini only)                 # "gemini"
 RATE_LIMIT_TRIAGE=10
 ```
 
@@ -174,8 +174,8 @@ DB_NAME=clinagenda
 PORT=3000
 JWT_SECRET=...
 GOOGLE_API_KEY=...              # Gemini (padrão)
-ANTHROPIC_API_KEY=sk-ant-...    # Fallback opcional
-AI_PROVIDER=gemini              # "gemini" | "anthropic"
+GOOGLE_API_KEY=sk-ant-...    # Fallback opcional
+# AI_PROVIDER=gemini (fixed: gemini only)              # "gemini"
 RATE_LIMIT_TRIAGE=10
 ```
 
@@ -192,7 +192,7 @@ RATE_LIMIT_TRIAGE=10
 ```
 TriageAiProvider (interface)
   ├─ GeminiProvider (gemini-1.5-pro) ← PADRÃO
-  └─ AnthropicProvider (claude-opus-5-5) ← FALLBACK
+  └─ GeminiProvider (gemini-1.5-pro) ← FALLBACK
        ├─ System prompt fixo (português, idoso-friendly, JSON output)
        ├─ Zod validation no response
        ├─ Mapeamento especialidades IA → IDs banco (sinônimos)
@@ -228,7 +228,7 @@ TriageAiProvider (interface)
 
 | Medida | Implementação |
 |--------|---------------|
-| Chave IA só no backend | `GOOGLE_API_KEY` / `ANTHROPIC_API_KEY` em env Render; **nunca no app RN** |
+| Chave IA só no backend | `GOOGLE_API_KEY` / `GOOGLE_API_KEY` em env Render; **nunca no app RN** |
 | Dados sensíveis minimizados | IA recebe só sintomas/duração/intensidade (sem nome/CPF/telefone) |
 | Logs sem saúde | `console.log` no backend não inclui `reply` nem `collected` |
 | Vínculo só ao paciente | `triagens.pacienteId` = paciente logado |

@@ -3,7 +3,6 @@ const { getBanco } = require("../config/database");
 const { autenticar } = require("../middlewares/auth");
 const { ObjectId } = require("mongodb");
 const { v4: uuidv4 } = require("uuid");
-const Anthropic = require("@anthropic-ai/sdk");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { z } = require("zod");
 
@@ -73,35 +72,6 @@ class TriageAiProvider {
   }
 }
 
-// --- Anthropic Provider ---
-class AnthropicProvider extends TriageAiProvider {
-  constructor(apiKey) {
-    super();
-    this.client = new Anthropic({ apiKey });
-  }
-
-  async call(messages, systemPrompt) {
-    try {
-      const response = await this.client.messages.create({
-        model: "claude-opus-5-5-20261120",
-        max_tokens: 1024,
-        temperature: 0.3,
-        system: systemPrompt,
-        messages: messages.map(m => ({ role: m.role, content: m.content })),
-      });
-
-      const content = response.content[0];
-      if (content.type !== "text") {
-        throw new Error("Resposta inesperada da IA");
-      }
-      return content.text;
-    } catch (error) {
-      console.error("Erro Anthropic:", error.message);
-      throw error;
-    }
-  }
-}
-
 // --- Gemini Provider ---
 class GeminiProvider extends TriageAiProvider {
   constructor(apiKey) {
@@ -139,28 +109,20 @@ class GeminiProvider extends TriageAiProvider {
   }
 }
 
-// Factory para escolher provedor baseado em variável de ambiente
+// Factory para criar provedor Gemini
 function createAiProvider() {
-  const provider = process.env.AI_PROVIDER?.toLowerCase() || "anthropic";
-
-  if (provider === "gemini") {
-    const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.warn("GOOGLE_API_KEY não configurada, usando fallback determinístico");
-      return null;
-    }
-    console.log("Usando provedor: Gemini (gemini-1.5-pro)");
-    return new GeminiProvider(apiKey);
+  // Valida formato da chave da API Google
+  function isValidGoogleKey(key) {
+    return key && key.startsWith("AIza") && key.length > 20;
   }
 
-  // Default: Anthropic
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    console.warn("ANTHROPIC_API_KEY não configurada, usando fallback determinístico");
+  const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey || !isValidGoogleKey(apiKey)) {
+    console.warn("GOOGLE_API_KEY inválida ou não configurada, usando fallback determinístico");
     return null;
   }
-  console.log("Usando provedor: Anthropic (claude-opus-5-5)");
-  return new AnthropicProvider(apiKey);
+  console.log("Usando provedor: Gemini (gemini-1.5-pro)");
+  return new GeminiProvider(apiKey);
 }
 
 const aiProvider = createAiProvider();
@@ -449,10 +411,18 @@ router.post("/message", autenticar, async (req, res) => {
 
     if (aiResult.stage === "recommendation" || aiResult.stage === "emergency") {
       const specialtyNames = aiResult.specialties.map(s => s.name);
-      const dbSpecialtyIds = await mapSpecialtiesToDb(specialtyNames);
+      let dbSpecialtyIds = [];
+      try {
+        dbSpecialtyIds = await mapSpecialtiesToDb(specialtyNames);
+      } catch (dbError) {
+        console.error("Erro ao mapear especialidades no banco:", dbError.message);
+      }
+
+      // Fallback: usar um ID genérico se o mapeamento falhar
+      const fallbackEspecialidadeId = dbSpecialtyIds[0] || "000000000000000000000000";
 
       const specialtiesWithIds = aiResult.specialties.map((s, i) => ({
-        especialidadeId: dbSpecialtyIds[i] || dbSpecialtyIds[0],
+        especialidadeId: dbSpecialtyIds[i] || fallbackEspecialidadeId,
         nome: s.name,
         reason: s.reason,
         confidence: s.confidence,
@@ -460,7 +430,13 @@ router.post("/message", autenticar, async (req, res) => {
 
       session.specialties = specialtiesWithIds;
 
-      const triagemId = await persistTriagem(session);
+      let triagemId = null;
+      try {
+        triagemId = await persistTriagem(session);
+      } catch (persistError) {
+        console.error("Erro ao persistir triagem:", persistError.message);
+        triagemId = "fallback-" + Date.now();
+      }
 
       const disclaimer = aiResult.stage === "recommendation"
         ? "Esta é uma orientação inicial e não substitui a avaliação de um profissional de saúde."

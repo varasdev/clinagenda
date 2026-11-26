@@ -97,10 +97,10 @@ A 2ª entrega implementa **pré-triagem conversacional com IA (15% da nota)** + 
 │                                                           │         │
 │  ┌───────────────────────────────────────────────────────┘         │
 │  │              TriageAiProvider (interface)                       │
-│  │  ┌─────────────────────┐  ┌─────────────────────┐             │
-│  │  │ GeminiProvider      │  │ AnthropicProvider   │  (switch)   │
-│  │  │ (gemini-1.5-pro)    │  │ (claude-opus-5.5)   │             │
-│  │  └─────────────────────┘  └─────────────────────┘             │
+│  │  ┌─────────────────────┐                                         │
+│  │  │ GeminiProvider      │                                         │
+│  │  │ (gemini-1.5-pro)    │                                         │
+│  │  └─────────────────────┘                                         │
 │  └─────────────────────────────────────────────────────────────────┘│
 │                                  │                                  │
 │                                  ▼                                  │
@@ -117,7 +117,7 @@ A 2ª entrega implementa **pré-triagem conversacional com IA (15% da nota)** + 
 
 ## 5. Pré-triagem com IA — Detalhes Técnicos
 
-### 5.1 Provider Pattern (Troca de IA sem quebrar código)
+### 5.1 Provider Pattern (Gemini 1.5 Pro)
 
 ```typescript
 interface TriageAiProvider {
@@ -126,19 +126,17 @@ interface TriageAiProvider {
 }
 
 class GeminiProvider implements TriageAiProvider { ... }
-class AnthropicProvider implements TriageAiProvider { ... }
 
 function createAiProvider(): TriageAiProvider | null {
-  const provider = process.env.AI_PROVIDER?.toLowerCase() || "gemini";
-  // Instancia provedor baseado em env var
+  const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+  return new GeminiProvider(apiKey);
 }
 ```
 
 **Configuração via `.env`:**
 ```env
-AI_PROVIDER=gemini              # ou "anthropic"
 GOOGLE_API_KEY=sua-chave-gemini
-ANTHROPIC_API_KEY=sk-ant-...    # fallback
 ```
 
 ### 5.2 System Prompt (Compartilhado entre provedores)
@@ -199,7 +197,7 @@ Se IA falhar (timeout, quota, erro): regras baseadas em palavras-chave dos sinto
 
 | Medida | Implementação |
 |--------|---------------|
-| **Chave IA só no backend** | `GOOGLE_API_KEY` / `ANTHROPIC_API_KEY` em env Render; **nunca no app RN** |
+| **Chave IA só no backend** | `GOOGLE_API_KEY` em env Render; **nunca no app RN** |
 | **Dados sensíveis minimizados** | IA recebe só sintomas/duração/intensidade (sem nome/CPF/telefone) |
 | **Logs sem saúde** | `console.log` não inclui `reply` nem `collected` da triagem |
 | **Vínculo só ao paciente** | `triagens.pacienteId` = paciente logado; profissional/admin não veem triagens alheios |
@@ -265,9 +263,7 @@ MONGODB_URI=mongodb+srv://...
 DB_NAME=clinagenda
 PORT=3000
 JWT_SECRET=...
-GOOGLE_API_KEY=...              # Gemini (padrão)
-ANTHROPIC_API_KEY=sk-ant-...    # Fallback opcional
-AI_PROVIDER=gemini              # "gemini" | "anthropic"
+GOOGLE_API_KEY=...              # Gemini 1.5 Pro
 RATE_LIMIT_TRIAGE=10            # req/min por IP
 ```
 

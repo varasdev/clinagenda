@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, Image } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { colors, spacing, borderRadius, typography, minTouchTarget, globalStyles, a11y } from '@/theme';
-import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 
 export const LoginScreen = () => {
@@ -51,19 +50,16 @@ export const LoginScreen = () => {
       >
         {/* Logo/Brand */}
         <View style={{ alignItems: 'center', marginBottom: spacing.xxl }}>
-          <View
+          <Image
+            source={require('@/assets/icon.png')}
             style={{
               width: 72,
               height: 72,
               borderRadius: 18,
-              backgroundColor: colors.primary,
-              alignItems: 'center',
-              justifyContent: 'center',
             }}
+            resizeMode="contain"
             {...a11y.image('ClínAgenda - Saúde na Palma da Mão')}
-          >
-            <Ionicons name="medical" size={36} color={colors.textOnPrimary} />
-          </View>
+          />
           <Text style={{ ...typography.h1, color: colors.primaryDark, marginTop: spacing.md }}>
             ClínAgenda
           </Text>

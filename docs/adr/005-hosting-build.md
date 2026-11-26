@@ -9,7 +9,7 @@ API já roda no Render (Web Service). Frontend web é Static Site no Render. Pre
 ## Decisão
 | Componente | Onde | Como |
 |------------|------|------|
-| **API (backend + triagem)** | Render (mesmo Web Service) | Novas rotas `/triage/*` no `server.js`; variável `ANTHROPIC_API_KEY` no painel Render; `GET /health` para warm-up |
+| **API (backend + triagem)** | Render (mesmo Web Service) | Novas rotas `/triage/*` no `server.js`; variável `GOOGLE_API_KEY` no painel Render; `GET /health` para warm-up |
 | **Banco** | MongoDB Atlas (já configurado) | String de conexão `MONGODB_URI` no Render; `DB_NAME` |
 | **App RN (paciente)** | EAS Build (preview profile) | `eas build --profile preview --platform android` → APK instalável; `EXPO_PUBLIC_API_URL=https://clinagenda-api.onrender.com` |
 | **Frontend web (profissional/admin)** | Render Static Site (já publicado) | Sem mudanças |
@@ -20,7 +20,7 @@ MONGODB_URI=...
 DB_NAME=...
 PORT=3000
 JWT_SECRET=...
-ANTHROPIC_API_KEY=sk-ant-...   # NOVA - chave do Claude Opus 5.5
+GOOGLE_API_KEY=sk-ant-...   # NOVA - chave do Claude Opus 5.5
 ```
 
 ## Variáveis no app RN (EAS Build / .env)

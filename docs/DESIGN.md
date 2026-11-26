@@ -41,8 +41,8 @@
 │  │  ┌────────────────────────────────────────────────┘            │
 │  │  │              TriageAiProvider (interface)                   │
 │  │  │  ┌─────────────────────┐                                    │
-│  │  │  │ AnthropicProvider   │  ◄── implements                    │
-│  │  │  │ (claude-opus-5-5)   │                                    │
+│  │  │  │ GeminiProvider   │  ◄── implements                    │
+│  │  │  │ (gemini-1.5-pro)   │                                    │
 │  │  │  └─────────────────────┘                                    │
 │  │  └────────────────────────────────────────────────────────────┘ │
 │  └─────────────────────────────────────────────────────────────────┘│
@@ -58,8 +58,8 @@
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                    ANTHROPIC API (Claude Opus 5.5)                  │
-│  POST /v1/messages  →  structured JSON output (TriageOutput)        │
+│                    GOOGLE GEMINI API (gemini-1.5-pro)                  │
+│  generateContent  →  structured JSON output (TriageOutput)        │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -79,7 +79,7 @@ Paciente (RN)                          API (Backend)                    Anthropi
     ├─ POST /triage/message ──────────────►│                                │
     │  { sessionId, message: "dor..." }   │                                │
     │                                      ├─ Constrói prompt + histórico   │
-    │                                      ├─ POST /v1/messages ───────────►│
+    │                                      ├─ generateContent ───────────►│
     │                                      │                                ├─ Processa
     │                                      │◄─ JSON TriageOutput ───────────┤
     │                                      │                                │
@@ -274,7 +274,7 @@ interface TriageAiProvider {
 }
 ```
 
-**Implementação `AnthropicProvider`:**
+**Implementação `GeminiProvider`:**
 - Usa `@anthropic-ai/sdk`
 - System prompt fixo (português, idoso-friendly, 1 pergunta por vez, max 7 turnos, JSON output)
 - Validação Zod no response
@@ -406,7 +406,7 @@ async function createAgendamento({ pacienteId, profissionalId, data, hora, triag
 
 | Medida | Implementação |
 |--------|---------------|
-| **Chave IA só no backend** | `ANTHROPIC_API_KEY` em env do Render; nunca no app RN |
+| **Chave IA só no backend** | `GOOGLE_API_KEY` em env do Render; nunca no app RN |
 | **Dados sensíveis minimizados** | Não envia nome/CPF/telefone para IA; só sintomas/duração/intensidade |
 | **Logs sem saúde** | `console.log` no backend não inclui `reply` nem `collected` da triagem |
 | **Vínculo só ao paciente** | `triagens.pacienteId` = paciente logado; profissional/admin não veem triagens de outros |
@@ -423,7 +423,7 @@ MONGODB_URI=mongodb+srv://...
 DB_NAME=clinagenda
 PORT=3000
 JWT_SECRET=...
-ANTHROPIC_API_KEY=sk-ant-...          # NOVO
+GOOGLE_API_KEY=sk-ant-...          # NOVO
 RATE_LIMIT_TRIAGE=10                  # req/min por IP
 ```
 

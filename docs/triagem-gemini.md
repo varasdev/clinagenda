@@ -10,14 +10,14 @@ Sistema de pré-triagem conversacional que usa Google Gemini 1.5 Pro para coleta
 ### Variáveis de Ambiente (Backend)
 
 ```env
-# Provedor de IA: "gemini" | "anthropic"
+# Provedor de IA: "gemini"
 AI_PROVIDER=gemini
 
 # Chave da API do Google Generative AI
 GOOGLE_API_KEY=sua-chave-aqui
 
 # Fallback (opcional) - mantido para compatibilidade
-ANTHROPIC_API_KEY=sk-ant-...
+GOOGLE_API_KEY=sk-ant-...
 ```
 
 ### Obter Chave Gemini
@@ -32,7 +32,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 ### Provider Pattern
 ```
 TriageAiProvider (interface)
-    ├── AnthropicProvider (claude-opus-5-5)
+    ├── GeminiProvider (gemini-1.5-pro)
     └── GeminiProvider (gemini-1.5-pro)
 ```
 
@@ -198,8 +198,8 @@ Produção: migrar para Redis.
 ## Trocar para Anthropic
 
 ```env
-AI_PROVIDER=anthropic
-ANTHROPIC_API_KEY=sk-ant-...
+AI_PROVIDER=gemini
+GOOGLE_API_KEY=sk-ant-...
 ```
 
 Sem alteração de código.

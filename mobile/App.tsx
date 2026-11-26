@@ -20,7 +20,7 @@ export default function App() {
     <AuthProvider>
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <RootNavigator />
-        <StatusBar style="dark" backgroundColor="#f5f8f6" />
+        <StatusBar style="dark" />
       </SafeAreaView>
     </AuthProvider>
   );
