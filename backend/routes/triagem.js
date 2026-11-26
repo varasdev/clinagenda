@@ -120,7 +120,7 @@ class GeminiProvider extends TriageAiProvider {
 function createAiProvider() {
   // Valida formato da chave da API Google
   function isValidGoogleKey(key) {
-    return key && key.startsWith("AIza") && key.length > 20;
+    return key && (key.startsWith("AIza") || key.startsWith("AQ")) && key.length > 20;
   }
 
   const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
