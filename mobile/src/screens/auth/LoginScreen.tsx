@@ -51,7 +51,7 @@ export const LoginScreen = () => {
         {/* Logo/Brand */}
         <View style={{ alignItems: 'center', marginBottom: spacing.xxl }}>
           <Image
-            source={require('@/assets/icon.png')}
+            source={require('../../../assets/icon.png')}
             style={{
               width: 72,
               height: 72,
