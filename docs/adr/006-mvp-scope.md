@@ -18,7 +18,7 @@ Entrega em 09/12. Hoje 24/11 = 15 dias. Precisa de "mínimo demonstrável" funci
 | **Notificações** | In-app: badge na aba, próxima consulta em destaque na Home |
 | **Perfil** | Ver/editar nome, telefone, endereço (campos permitidos pela API) |
 | **Acessibilidade** | Fonte ≥16sp, botões ≥48dp, `accessibilityLabel/Role/Hint`, contraste AA, poucos passos |
-| **Deploy** | API no Render (rotas `/triage/*` + `ANTHROPIC_API_KEY`); EAS Build preview APK; `EXPO_PUBLIC_API_URL` = API publicada |
+| **Deploy** | API no Render (rotas `/triage/*` + `GOOGLE_API_KEY`); EAS Build preview APK; `EXPO_PUBLIC_API_URL` = API publicada |
 | **Docs** | README RN (execução local, build, variáveis), ADRs linkados, script de demo |
 
 ## Polimento (04–08/12) — só se houver tempo

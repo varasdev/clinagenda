@@ -19,7 +19,7 @@
 | ID | Tarefa | Peso | Dep | Est | MVP | Critério de Aceite |
 |----|--------|------|-----|-----|-----|-------------------|
 | **T01** | Configurar projeto Expo (TypeScript, ESLint, Prettier, husky) | — | — | 0.5 | ✅ | `npx expo start` roda; `npm run lint` passa |
-| **T02** | Instalar dependências core: `@anthropic-ai/sdk`, `zod`, `axios`, `expo-secure-store`, `expo-notifications`, `expo-device`, `expo-constants`, `@react-navigation/*`, `react-native-gesture-handler`, `react-native-screens`, `react-native-safe-area-context`, `date-fns` | — | T01 | 0.5 | ✅ | `package.json` tem todas; `npm install` limpo |
+| **T02** | Instalar dependências core: `@google/generative-ai`, `zod`, `axios`, `expo-secure-store`, `expo-notifications`, `expo-device`, `expo-constants`, `@react-navigation/*`, `react-native-gesture-handler`, `react-native-screens`, `react-native-safe-area-context`, `date-fns` | — | T01 | 0.5 | ✅ | `package.json` tem todas; `npm install` limpo |
 | **T03** | Configurar navegação: AuthStack + MainTabs (Home, Agenda, Perfil) + TypeScript types | — | T01 | 0.5 | ✅ | Navega entre tabs; TS sem erros |
 | **T04** | Cliente HTTP único (`services/api.ts`): axios + interceptor JWT (SecureStore) + baseURL `EXPO_PUBLIC_API_URL` + tratamento central de erro (401→logout, network→banner) | — | T02 | 0.5 | ✅ | Requisição autenticada funciona; 401 limpa token e vai pra Login |
 | **T05** | Tema/Estilos base: cores, tipografia (≥16sp), espaçamento, componentes Button, Input, Card, Badge acessíveis (`accessibilityLabel`, `role`, `hint`), contraste AA | — | T01 | 0.5 | ✅ | Storybook/visual check: botões ≥48dp, fonte ≥16sp, labels |
