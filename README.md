@@ -27,7 +27,7 @@ Aplicação completa composta por:
 - **Autenticação JWT** (8h expiração) + bcryptjs
 - **RBAC**: paciente, profissional, administrador
 - **Gestão**: clínicas, especialidades, profissionais, pacientes, disponibilidades, agendamentos
-- **Pré-triagem IA** (`/triage/*`) — Anthropic Claude Opus 5.5 via provider pattern
+- **Pré-triagem IA** (`/triage/*`) — Google Gemini via provider pattern
 - **Validação**: Zod schemas, conflitos 409, transações MongoDB
 - **Documentação**: Swagger/OpenAPI 3.0
 
@@ -57,7 +57,7 @@ Aplicação completa composta por:
 | Camada | Tecnologia |
 |--------|------------|
 | **Backend** | Node.js 22+, Express 5, MongoDB (native driver), JWT 8h, bcryptjs |
-| **IA** | Google Generative AI `@google/generative-ai`, Gemini 1.5 Pro (padrão) + fallback Anthropic, Zod validation |
+| **IA** | Google Generative AI `@google/generative-ai`, Gemini (configurável via `GEMINI_MODEL`, default: `gemini-2.5-flash`), Zod validation |
 | **Mobile** | Expo SDK 58, React Native 0.88, React Navigation v6, TypeScript |
 | **Estado** | React Context (auth), local state (forms) |
 | **Storage** | expo-secure-store (JWT), AsyncStorage (opcional triagem recovery) |
@@ -137,9 +137,8 @@ MONGODB_URI=mongodb+srv://...
 DB_NAME=clinagenda
 PORT=3000
 JWT_SECRET=...
-GOOGLE_API_KEY=sua-chave-gemini    # Gemini (padrão)
-GOOGLE_API_KEY=sk-ant-...       # Fallback opcional
-# AI_PROVIDER=gemini (fixed: gemini only)                 # "gemini"
+GOOGLE_API_KEY=sua-chave-gemini
+GEMINI_MODEL=gemini-2.5-flash      # Opcional: modelo Gemini (default: gemini-2.5-flash)
 RATE_LIMIT_TRIAGE=10
 ```
 
@@ -173,9 +172,8 @@ MONGODB_URI=...
 DB_NAME=clinagenda
 PORT=3000
 JWT_SECRET=...
-GOOGLE_API_KEY=...              # Gemini (padrão)
-GOOGLE_API_KEY=sk-ant-...    # Fallback opcional
-# AI_PROVIDER=gemini (fixed: gemini only)              # "gemini"
+GOOGLE_API_KEY=...
+GEMINI_MODEL=gemini-2.5-flash      # Opcional: modelo Gemini (default: gemini-2.5-flash)
 RATE_LIMIT_TRIAGE=10
 ```
 
@@ -191,12 +189,11 @@ RATE_LIMIT_TRIAGE=10
 ### Fluxo IA (Provider Pattern)
 ```
 TriageAiProvider (interface)
-  ├─ GeminiProvider (gemini-1.5-pro) ← PADRÃO
-  └─ GeminiProvider (gemini-1.5-pro) ← FALLBACK
+  └─ GeminiProvider (configurável via GEMINI_MODEL, default: gemini-2.5-flash)
        ├─ System prompt fixo (português, idoso-friendly, JSON output)
        ├─ Zod validation no response
        ├─ Mapeamento especialidades IA → IDs banco (sinônimos)
-       ├─ Fallback determinístico se API falhar
+       ├─ Fallback determinístico se API falhar (usa mensagens do user se sintomas vazio)
        └─ Detecção emergência ANTES da IA (keywords: dor no peito, falta de ar, AVC, etc.)
 ```
 
@@ -228,7 +225,7 @@ TriageAiProvider (interface)
 
 | Medida | Implementação |
 |--------|---------------|
-| Chave IA só no backend | `GOOGLE_API_KEY` / `GOOGLE_API_KEY` em env Render; **nunca no app RN** |
+| Chave IA só no backend | `GOOGLE_API_KEY` em env Render; **nunca no app RN** |
 | Dados sensíveis minimizados | IA recebe só sintomas/duração/intensidade (sem nome/CPF/telefone) |
 | Logs sem saúde | `console.log` no backend não inclui `reply` nem `collected` |
 | Vínculo só ao paciente | `triagens.pacienteId` = paciente logado |
